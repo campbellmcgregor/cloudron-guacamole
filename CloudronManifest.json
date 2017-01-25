@@ -5,7 +5,7 @@
   "description": "file://DESCRIPTION.md",
   "changelog": "file://CHANGELOG",
   "tagline": "Apache Guacamole is a clientless remote desktop gateway. It supports standard protocols like VNC, RDP, and SSH.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "healthCheckPath": "/",
   "httpPort": 8080,
   "addons": {
@@ -20,7 +20,9 @@
     "vnc", "rdp", "ssh", "rdesktop"
   ],
   "mediaLinks": [
-    "http://www.example.com"
+    "https://git.cloudron.io/dswd/guacamole-app/raw/master/screenshots/1.png",
+    "https://git.cloudron.io/dswd/guacamole-app/raw/master/screenshots/2.png",
+    "https://git.cloudron.io/dswd/guacamole-app/raw/master/screenshots/3.png"
   ],
   "postInstallMessage": "file://POSTINSTALL.md"
 }
