@@ -12,7 +12,7 @@
      "mysql": {},
      "ldap": {}
   },
-  "developmentMode": false,
+  "memoryLimit": 2048,
   "manifestVersion": 1,
   "website": "http://guacamole.incubator.apache.org/",
   "contactEmail": "support@cloudron.io",
@@ -21,7 +21,7 @@
     "vnc", "rdp", "ssh", "rdesktop"
   ],
   "mediaLinks": [
-    "file:///screenshots/1.jpg"
+    "http://www.example.com"
   ],
   "postInstallMessage": "file://POSTINSTALL.md"
 }

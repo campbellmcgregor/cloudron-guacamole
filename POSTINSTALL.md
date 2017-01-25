@@ -5,4 +5,6 @@ To store connection data of custom permissions for Cloudron users, a Guacamole a
 There is a default admin user in Guacamole with the following credentials:
 
 * Username: `guacadmin`
-* Password: `guacadmin` (please change that password immediatly)
+* Password: `guacadmin` 
+
+**Please change the admin password on first login**

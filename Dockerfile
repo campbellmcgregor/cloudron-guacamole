@@ -41,16 +41,22 @@ RUN mkdir -p /app/code/lib \
     && rm -rf mysql-connector-java-${MYSQL_CONNECTOR_VERSION}
 
 # Get WAR app
-RUN mkdir -p /app/code/war \
-    && wget "$DOWNLOAD_URL/binary/guacamole-${VERSION}.war" -O /app/code/war/ROOT.war \
-    && ln -s /app/code/war /usr/share/tomcat8/webapps
+RUN wget "$DOWNLOAD_URL/binary/guacamole-${VERSION}.war" -O /app/code/guacamole.war \
+    && mkdir /app/code/guacamole-web \
+    && cd /app/code/guacamole-web \
+    && unzip /app/code/guacamole.war \
+    && rm /app/code/guacamole.war
 
 # Configure Tomcat
 RUN ln -s /run/tomcat/temp /usr/share/tomcat8/temp \
+    && ln -s /run/tomcat/logs /usr/share/tomcat8/logs \
+    && ln -s /run/tomcat/work /usr/share/tomcat8/work \
     && ln -s /etc/tomcat8 /usr/share/tomcat8/conf \
-    && ln -s /run/guacamole/guacamole.properties /app/code/guacamole.properties
+    && ln -s /run/guacamole/guacamole.properties /app/code/guacamole.properties \
+    && ln -s /run/tomcat/webapps /usr/share/tomcat8/webapps
     
 ENV GUACAMOLE_HOME /app/code
+ENV JAVA_OPTS "-Djava.awt.headless=true -server -Xmx512M -Djava.security.egd=file:/dev/urandom"
 
 ADD start.sh /app/code/start.sh
 
