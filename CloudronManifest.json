@@ -12,7 +12,6 @@
      "mysql": {},
      "ldap": {}
   },
-  "memoryLimit": 2048,
   "manifestVersion": 1,
   "website": "http://guacamole.incubator.apache.org/",
   "contactEmail": "support@cloudron.io",

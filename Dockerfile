@@ -56,7 +56,6 @@ RUN ln -s /run/tomcat/temp /usr/share/tomcat8/temp \
     && ln -s /run/tomcat/webapps /usr/share/tomcat8/webapps
     
 ENV GUACAMOLE_HOME /app/code
-ENV JAVA_OPTS "-Djava.awt.headless=true -server -Xmx512M -Djava.security.egd=file:/dev/urandom"
 
 ADD start.sh /app/code/start.sh
 

@@ -30,4 +30,6 @@ $MYSQL < /app/code/schema/001-create-schema.sql \
 
 /app/code/sbin/guacd
 
+export JAVA_OPTS="-Djava.awt.headless=true -XX:MaxRAM=256M -Djava.security.egd=file:/dev/urandom"
+
 exec /usr/share/tomcat8/bin/catalina.sh run
