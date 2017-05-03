@@ -6,7 +6,7 @@ This repository contains the Cloudron app package source for [Guacamole](http://
 
 [![Install](https://cloudron.io/img/button.svg)](https://cloudron.io/button.html?app=org.apache.incubator.guacamole.cloudronapp)
 
-or using the [Cloudron command line tooling](https://cloudron.io/references/cli.html)
+or using the [Cloudron command line tooling](https://git.cloudron.io/cloudron/cloudron-cli/)
 
 ```
 cloudron install --appstore-id org.apache.incubator.guacamole
@@ -14,7 +14,7 @@ cloudron install --appstore-id org.apache.incubator.guacamole
 
 ## Building
 
-The app package can be built using the [Cloudron command line tooling](https://cloudron.io/references/cli.html).
+The app package can be built using the [Cloudron command line tooling](https://git.cloudron.io/cloudron/cloudron-cli/).
 
 ```
 cd guacamole-app

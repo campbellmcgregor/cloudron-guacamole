@@ -3,3 +3,10 @@
 
 [0.1.1]
 * Added screenshots
+
+[0.1.2]
+* Rebuild
+
+[0.1.3]
+* Updated to base image 0.10.0
+* Updated to version 0.9.12
