@@ -1,159 +1,145 @@
 #!/usr/bin/env node
 
-'use strict';
+/* global describe, before, after, xit, it */
+'use strict'
 
-var execSync = require('child_process').execSync,
-    expect = require('expect.js'),
-    path = require('path'),
-    webdriver = require('selenium-webdriver');
+const execSync = require('child_process').execSync
+const expect = require('expect.js')
+const net = require('net')
+const path = require('path')
 
-var by = webdriver.By,
-    until = webdriver.until;
+const webdriver = require('selenium-webdriver')
 
-var accessKey = 'admin',
-    secretKey = 'secretkey';
+const by = webdriver.By
+const until = webdriver.until
 
-var bucket_prefix = 'bucket',
-    bucket_id = 0,
-    bucket;
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+if (!process.env.CLOUDRON_USERNAME || !process.env.CLOUDRON_PASSWORD) {
+  console.log('CLOUDRON_USERNAME and CLOUDRON_PASSWORD env vars need to be set')
+  process.exit(1)
+}
 
 
 describe('Application life cycle test', function () {
-    this.timeout(0);
+  this.timeout(0)
 
-    var chrome = require('selenium-webdriver/chrome');
-    var server, browser = new chrome.Driver();
+  const chrome = require('selenium-webdriver/chrome')
+  let server
+  const browser = new chrome.Driver()
+  const username = process.env.CLOUDRON_USERNAME
+  const password = process.env.CLOUDRON)PASSWORD
 
-    before(function (done) {
-        var seleniumJar= require('selenium-server-standalone-jar');
-        var SeleniumServer = require('selenium-webdriver/remote').SeleniumServer;
-        server = new SeleniumServer(seleniumJar.path, { port: 4444 });
-        server.start();
+  before(function () {
+    const seleniumJar = require('selenium-server-standalone-jar')
+    const SeleniumServer = require('selenium-webdriver/remote').SeleniumServer
+    server = new SeleniumServer(seleniumJar.path, {port: 4444})
+    server.start()
+  })
 
-        done();
-    });
+  after(function () {
+    browser.quit()
+    server.stop()
+  })
 
-    after(function (done) {
-        browser.quit();
-        server.stop();
-        done();
-    });
+  const LOCATION = 'test'
+  const TEST_TIMEOUT = parseInt(process.env.TIMEOUT, 10) || 20000
+  let app
 
-    var LOCATION = 'minio-test';
-    var TEST_TIMEOUT = 10000;
-    var app;
+  function waitForElement (elem) {
+    return browser.wait(until.elementLocated(elem), TEST_TIMEOUT)
+      .then(() => browser.wait(until.elementIsVisible(browser.findElement(elem)), TEST_TIMEOUT))
+  }
 
-    function pageLoaded(callback) {
-        return browser.wait(until.elementLocated(by.className('page-load pl-0 pl-1')), TEST_TIMEOUT).then(function () {
-            callback();
-        });
-    }
+  function getAppInfo () {
+    const inspect = JSON.parse(execSync('cloudron inspect'))
+    app = inspect.apps.filter(a => a.location === LOCATION || a.location === LOCATION + '2')[0]
+    expect(app).to.be.an('object')
+  }
 
-    function visible(selector, callback) {
-        return browser.wait(until.elementLocated(selector), TEST_TIMEOUT).then(function () {
-            browser.wait(until.elementIsVisible(browser.findElement(selector)), TEST_TIMEOUT).then(function () {
-                callback();
-            });
-        });
-    }
+  function login () {
+    return browser.manage().deleteAllCookies()
+      .then(() => browser.get('https://' + app.fqdn))
+      .then(() => browser.wait(until.elementLocated(by.id('email')), TEST_TIMEOUT))
+      .then(() => browser.findElement(by.id('email')).sendKeys(username))
+      .then(() => browser.findElement(by.id('password')).sendKeys(password))
+      .then(() => browser.findElement(by.tagName('form')).submit())
+  }
 
-    function login(callback) {
-        browser.manage().deleteAllCookies();
-        browser.get('https://' + app.fqdn);
+  function logout () {
+    browser.get('https://' + app.fqdn)
+    return browser.findElement(by.id('logoutButton')).click() //THIS NEEDS TO BE A LINK FIND TO /logout, referenced only by the Text Logout (no tag/id)
+      .then(() => waitForElement(by.id('loginButton')))
+  }
 
-        visible(by.id('accessKey'), function () {
-            browser.findElement(by.id('accessKey')).sendKeys(accessKey);
-            browser.findElement(by.id('secretKey')).sendKeys(secretKey);
-            browser.findElement(by.className('lw-btn')).click();
-            browser.wait(until.elementLocated(by.id('top-right-menu')), TEST_TIMEOUT).then(function () { callback(); });
-        });
-    }
+  xit('build app', function () {
+    execSync('cloudron build', {cwd: path.resolve(__dirname, '..'), stdio: 'inherit'})
+  })
 
-    function logout(callback) {
-        browser.get('https://' + app.fqdn);
+  it('install app', function () {
+    execSync('cloudron install --new --wait --location ' + LOCATION, {
+      cwd: path.resolve(__dirname, '..'),
+      stdio: 'inherit'
+    })
+  })
 
-        pageLoaded(function () {
-            visible(by.id('top-right-menu'), function () {
-                browser.findElement(by.id('top-right-menu')).click();
-                visible(by.xpath('//*[text()="Sign Out "]'), function () {
-                    browser.findElement(by.xpath('//*[text()="Sign Out "]')).click();
+  it('can get app information', getAppInfo)
+  it('can login', login)
+  it('can logout', logout)
 
-                    browser.wait(until.elementLocated(by.id('accessKey')), TEST_TIMEOUT).then(function () { callback(); });
-                });
-            });
-        });
-    }
+  it('can restart app', function () {
+    execSync('cloudron restart --wait --app ' + app.id)
+  })
 
-    function addBucket(callback) {
-        bucket_id = bucket_id + 1;
-        bucket = bucket_prefix + bucket_id;
-        browser.get('https://' + app.fqdn);
+  it('can login', login)
+  it('can logout', logout)
 
-        pageLoaded(function () {
-            visible(by.className('fa fa-plus'), function () {
-                browser.findElement(by.className('fa fa-plus')).click();
-                visible(by.className('fa fa-hdd-o'), function () {
-                    browser.findElement(by.className('fa fa-hdd-o')).click();
-                    visible(by.xpath('//*[@class="modal-body"]/form/div/input'), function() {
-                        browser.findElement(by.xpath('//*[@class="modal-body"]/form/div/input')).sendKeys(bucket);
-                        browser.findElement(by.xpath('//*[@class="modal-body"]/form')).submit();
-                        visible(by.xpath('//*[@class="main"]/a[text()="' + bucket + '"]'), function() {
-                            callback();
-                        });
-                    });
-                });
-            });
-        });
-    }
+  it('backup app', function () {
+    execSync('cloudron backup create --app ' + app.id, {cwd: path.resolve(__dirname, '..'), stdio: 'inherit'})
+  })
 
-    xit('build app', function () {
-        execSync('cloudron build', { cwd: path.resolve(__dirname, '..'), stdio: 'inherit' });
-    });
+  it('restore app', function () {
+    execSync('cloudron restore --app ' + app.id, {cwd: path.resolve(__dirname, '..'), stdio: 'inherit'})
+  })
 
-    it('install app', function () {
-        execSync('cloudron install --new --wait --location ' + LOCATION, { cwd: path.resolve(__dirname, '..'), stdio: 'inherit' });
-    });
+  it('can login', login)
+  it('can logout', logout)
 
-    it('can get app information', function () {
-        var inspect = JSON.parse(execSync('cloudron inspect'));
+  it('move to different location', function () {
+    execSync('cloudron configure --wait --location ' + LOCATION + '2 --app ' + app.id, {
+      cwd: path.resolve(__dirname, '..'),
+      stdio: 'inherit'
+    })
+  })
+  it('can get new app information', getAppInfo)
 
-        app = inspect.apps.filter(function (a) { return a.location === LOCATION; })[0];
+  it('can login', login)
+  it('can logout', logout)
 
-        expect(app).to.be.an('object');
-    });
+  it('uninstall app', function () {
+    execSync('cloudron uninstall --app ' + app.id, {cwd: path.resolve(__dirname, '..'), stdio: 'inherit'})
+  })
 
-    it('can login', login);
-    it('can add buckets', addBucket);
-    it('can logout', logout);
+  // test update (this test will only work after app is published)
+  it('can install app', function () {
+    execSync('cloudron install --new --wait --appstore-id io.cloudron.openvpn --location ' + LOCATION, {
+      cwd: path.resolve(__dirname, '..'),
+      stdio: 'inherit'
+    })
+  })
 
-    it('backup app', function () {
-        execSync('cloudron backup create --app ' + app.id, { cwd: path.resolve(__dirname, '..'), stdio: 'inherit' });
-    });
+  it('can get app information', getAppInfo)
+  it('can login', login)
+  it('can logout', logout)
 
-    it('restore app', function () {
-        execSync('cloudron restore --app ' + app.id, { cwd: path.resolve(__dirname, '..'), stdio: 'inherit' });
-    });
+  it('can update', function () {
+    execSync('cloudron install --wait --app ' + app.id, {cwd: path.resolve(__dirname, '..'), stdio: 'inherit'})
+  })
 
-    it('can login', login);
-    it('can add buckets', addBucket);
-    it('can logout', logout);
+  it('can login', login)
+  it('can logout', logout)
 
-    it('move to different location', function () {
-        browser.manage().deleteAllCookies();
-        execSync('cloudron install --location ' + LOCATION + '2', { cwd: path.resolve(__dirname, '..'), stdio: 'inherit' });
-        var inspect = JSON.parse(execSync('cloudron inspect'));
-        app = inspect.apps.filter(function (a) { return a.location === LOCATION + '2'; })[0];
-        expect(app).to.be.an('object');
-    });
-
-    it('can login', login);
-    it('can add buckets', addBucket);
-    it('can logout', logout);
-
-    it('uninstall app', function () {
-        execSync('cloudron uninstall --app ' + app.id, { cwd: path.resolve(__dirname, '..'), stdio: 'inherit' });
-    });
-
-});
+  it('uninstall app', function () {
+    execSync('cloudron uninstall --app ' + app.id, {cwd: path.resolve(__dirname, '..'), stdio: 'inherit'})
+  })
+})

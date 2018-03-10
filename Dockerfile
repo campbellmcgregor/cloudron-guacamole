@@ -9,9 +9,9 @@ RUN apt-get update \
        libtelnet-dev libvncserver-dev libpulse-dev libssl-dev libvorbis-dev libwebp-dev \ 
        tomcat8 freerdp ghostscript
 
-ENV VERSION 0.9.12-incubating
+ENV VERSION 0.9.14
 ENV MYSQL_CONNECTOR_VERSION 5.1.40
-ENV DOWNLOAD_URL "http://apache.org/dyn/closer.cgi?action=download&filename=incubator/guacamole/${VERSION}"
+ENV DOWNLOAD_URL "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/${VERSION}"
 
 RUN mkdir -p /app/code
 WORKDIR /app/code
