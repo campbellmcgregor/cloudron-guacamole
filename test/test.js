@@ -1,45 +1,35 @@
 #!/usr/bin/env node
-
-/* global describe, before, after, xit, it */
 'use strict'
+
+/* global describe, after, xit, it */
+
+require('chromedriver')
 
 const execSync = require('child_process').execSync
 const expect = require('expect.js')
-const net = require('net')
+// const net = require('net')
 const path = require('path')
 
-const webdriver = require('selenium-webdriver')
+const selenium = require('selenium-webdriver')
 
-const by = webdriver.By
-const until = webdriver.until
+const {By, until} = selenium
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-
-if (!process.env.CLOUDRON_USERNAME || !process.env.CLOUDRON_PASSWORD) {
-  console.log('CLOUDRON_USERNAME and CLOUDRON_PASSWORD env vars need to be set')
-  process.exit(1)
-}
-
+selenium.promise.USE_PROMISE_MANAGER = false
 
 describe('Application life cycle test', function () {
   this.timeout(0)
 
   const chrome = require('selenium-webdriver/chrome')
-  let server
-  const browser = new chrome.Driver()
-  const username = process.env.CLOUDRON_USERNAME
-  const password = process.env.CLOUDRON)PASSWORD
-
-  before(function () {
-    const seleniumJar = require('selenium-server-standalone-jar')
-    const SeleniumServer = require('selenium-webdriver/remote').SeleniumServer
-    server = new SeleniumServer(seleniumJar.path, {port: 4444})
-    server.start()
-  })
+  const browser = new selenium.Builder()
+    .forBrowser('chrome')
+    .setChromeOptions(new chrome.Options().addArguments(['no-sandbox']))
+    .build()
+  const username = 'guacadmin'
+  const password = 'guacadmin'
 
   after(function () {
     browser.quit()
-    server.stop()
   })
 
   const LOCATION = 'test'
@@ -51,6 +41,14 @@ describe('Application life cycle test', function () {
       .then(() => browser.wait(until.elementIsVisible(browser.findElement(elem)), TEST_TIMEOUT))
   }
 
+  function assertElementText (elem, supposedText) {
+    return browser.findElement(elem).getText()
+      .then(text => {
+        if (text === supposedText) return true
+        else throw new Error(`Assertion error. Expected text '${supposedText}'. Got '${text}.'`)
+      })
+  }
+
   function getAppInfo () {
     const inspect = JSON.parse(execSync('cloudron inspect'))
     app = inspect.apps.filter(a => a.location === LOCATION || a.location === LOCATION + '2')[0]
@@ -60,21 +58,21 @@ describe('Application life cycle test', function () {
   function login () {
     return browser.manage().deleteAllCookies()
       .then(() => browser.get('https://' + app.fqdn))
-      .then(() => browser.wait(until.elementLocated(by.id('email')), TEST_TIMEOUT))
-      .then(() => browser.findElement(by.id('email')).sendKeys(username))
-      .then(() => browser.findElement(by.id('password')).sendKeys(password))
-      .then(() => browser.findElement(by.tagName('form')).submit())
+      .then(() => waitForElement(By.id('email')))
+      .then(() => browser.findElement(By.id('email')).sendKeys(email))
+      .then(() => browser.findElement(By.id('password')).sendKeys(password))
+      .then(() => browser.findElement(By.xpath('//button[text()="Login"]')).click())
+      .then(() => waitForElement(By.xpath('//h2[text()="Welcome to your account!"]')))
   }
 
-  function logout () {
-    browser.get('https://' + app.fqdn)
-    return browser.findElement(by.id('logoutButton')).click() //THIS NEEDS TO BE A LINK FIND TO /logout, referenced only by the Text Logout (no tag/id)
-      .then(() => waitForElement(by.id('loginButton')))
+  function checkSettings () {
+    #HERE WE CAN CREATE A SUMMY CONNECTION TO CHECK IF IT LIVES POST RESTORE
+    return browser.get('https://' + app.fqdn + '/journal/add')
+      .then(() => waitForElement(By.id('field-entry')))
+      .then(() => browser.findElement(By.id('field-entry')).sendKeys('Gin and tonic'))
+      .then(() => browser.findElement(By.xpath('//button[text()="Save"]')).click())
   }
 
-  xit('build app', function () {
-    execSync('cloudron build', {cwd: path.resolve(__dirname, '..'), stdio: 'inherit'})
-  })
 
   it('install app', function () {
     execSync('cloudron install --new --wait --location ' + LOCATION, {
@@ -84,15 +82,15 @@ describe('Application life cycle test', function () {
   })
 
   it('can get app information', getAppInfo)
+
   it('can login', login)
-  it('can logout', logout)
 
   it('can restart app', function () {
     execSync('cloudron restart --wait --app ' + app.id)
   })
 
   it('can login', login)
-  it('can logout', logout)
+  it('check setting', checkSettings)
 
   it('backup app', function () {
     execSync('cloudron backup create --app ' + app.id, {cwd: path.resolve(__dirname, '..'), stdio: 'inherit'})
@@ -103,7 +101,7 @@ describe('Application life cycle test', function () {
   })
 
   it('can login', login)
-  it('can logout', logout)
+  it('check settings', checkSettings)
 
   it('move to different location', function () {
     execSync('cloudron configure --wait --location ' + LOCATION + '2 --app ' + app.id, {
@@ -114,32 +112,34 @@ describe('Application life cycle test', function () {
   it('can get new app information', getAppInfo)
 
   it('can login', login)
-  it('can logout', logout)
+  it('check settings', checkSettings)
 
   it('uninstall app', function () {
     execSync('cloudron uninstall --app ' + app.id, {cwd: path.resolve(__dirname, '..'), stdio: 'inherit'})
   })
 
-  // test update (this test will only work after app is published)
+  // test updates
   it('can install app', function () {
-    execSync('cloudron install --new --wait --appstore-id io.cloudron.openvpn --location ' + LOCATION, {
+    execSync('cloudron install --new --wait --appstore-id com.monicahq.cloudronapp --location ' + LOCATION, {
       cwd: path.resolve(__dirname, '..'),
       stdio: 'inherit'
     })
   })
-
+ 
   it('can get app information', getAppInfo)
   it('can login', login)
-  it('can logout', logout)
-
+  it('check settings', checkSettings)
+ 
   it('can update', function () {
     execSync('cloudron install --wait --app ' + app.id, {cwd: path.resolve(__dirname, '..'), stdio: 'inherit'})
   })
-
+ 
   it('can login', login)
-  it('can logout', logout)
-
+  it('check settings', checkSettings)
+ 
   it('uninstall app', function () {
     execSync('cloudron uninstall --app ' + app.id, {cwd: path.resolve(__dirname, '..'), stdio: 'inherit'})
   })
 })
+
+
