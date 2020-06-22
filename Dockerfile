@@ -1,15 +1,44 @@
-FROM cloudron/base:0.10.0
-MAINTAINER Guacamole Developers <support@cloudron.io>
+FROM cloudron/base:2.0.0@sha256:f9fea80513aa7c92fe2e7bf3978b54c8ac5222f47a9a32a7f8833edf0eb5a4f4
+
 
 EXPOSE 8000
 
-RUN apt-get update \
-    && apt-get -y install libcairo2-dev libjpeg-turbo8-dev libpng12-dev libossp-uuid-dev \
-       libavcodec-dev libavutil-dev libswscale-dev libfreerdp-dev libpango1.0-dev libssh2-1-dev \
-       libtelnet-dev libvncserver-dev libpulse-dev libssl-dev libvorbis-dev libwebp-dev \ 
-       tomcat8 freerdp ghostscript
+ARG PREFIX_DIR=/app/code/guacamole
 
-ENV VERSION 0.9.14
+# Build arguments
+ARG BUILD_DIR=/tmp/guacd-docker-BUILD
+ARG BUILD_DEPENDENCIES="              \
+        autoconf                      \
+        automake                      \
+        freerdp2-dev                  \
+        gcc                           \
+        libcairo2-dev                 \
+        libjpeg-turbo8-dev            \
+        libossp-uuid-dev              \
+        libpango1.0-dev               \
+        libpulse-dev                  \
+        libssh2-1-dev                 \
+        libssl-dev                    \
+        libtelnet-dev                 \
+        libtool                       \
+        libvncserver-dev              \
+        libwebsockets-dev             \
+        libwebp-dev                   \
+        tomcat8                       \
+        make"
+
+# Bring build environment up to date and install build dependencies
+RUN apt-get update                         && \
+    apt-get install -y $BUILD_DEPENDENCIES && \
+    rm -rf /var/lib/apt/lists/*
+
+# RUN apt-get update \
+#     && apt-get -y install libcairo2-dev libjpeg-turbo8-dev libpng12-dev libossp-uuid-dev \
+#        libavcodec-dev libavutil-dev libswscale-dev libfreerdp-dev libpango1.0-dev libssh2-1-dev \
+#        libtelnet-dev libvncserver-dev libpulse-dev libssl-dev libvorbis-dev libwebp-dev \ 
+#        tomcat8 freerdp ghostscript
+
+ENV VERSION 1.1.0
 ENV MYSQL_CONNECTOR_VERSION 5.1.40
 ENV DOWNLOAD_URL "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/${VERSION}"
 

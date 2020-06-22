@@ -1,28 +1,12 @@
 {
-  "id": "org.apache.guacamole.cloudronapp",
-  "title": "Guacamole",
-  "author": "Apache Software Foundation",
-  "description": "file://DESCRIPTION.md",
-  "changelog": "file://CHANGELOG",
-  "tagline": "Apache Guacamole is a clientless remote desktop gateway. It supports standard protocols like VNC, RDP, and SSH.",
-  "version": "0.1.4",
+  "id": "com.cloudron.guacamole",
+  "version": "0.1.0",
   "healthCheckPath": "/",
   "httpPort": 8080,
   "addons": {
-     "mysql": {},
-     "ldap": {}
+    "localstorage": {},
+    "mysql": {},
+    "ldap": {}
   },
-  "manifestVersion": 1,
-  "website": "http://guacamole.incubator.apache.org/",
-  "contactEmail": "support@cloudron.io",
-  "icon": "logo.png",
-  "tags": [
-    "vnc", "rdp", "ssh", "rdesktop"
-  ],
-  "mediaLinks": [
-    "https://git.cloudron.io/dswd/guacamole-app/raw/master/screenshots/1.png",
-    "https://git.cloudron.io/dswd/guacamole-app/raw/master/screenshots/2.png",
-    "https://git.cloudron.io/dswd/guacamole-app/raw/master/screenshots/3.png"
-  ],
-  "postInstallMessage": "file://POSTINSTALL.md"
+  "manifestVersion": 2
 }
