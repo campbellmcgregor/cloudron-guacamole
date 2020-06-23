@@ -4,25 +4,25 @@ set -eu
 
 mkdir -p /run/guacamole
 cat > /run/guacamole/guacamole.properties <<EOF
-ldap-hostname:${LDAP_SERVER}
-ldap-port:${LDAP_PORT}
-ldap-search-bind-dn:${LDAP_BIND_DN}
-ldap-search-bind-password:${LDAP_BIND_PASSWORD}
-ldap-user-base-dn:${LDAP_USERS_BASE_DN}
-ldap-group-base-dn:${LDAP_GROUPS_BASE_DN}
+ldap-hostname:${CLOUDRON_LDAP_SERVER}
+ldap-port:${CLOUDRON_LDAP_PORT}
+ldap-search-bind-dn:${CLOUDRON_LDAP_BIND_DN}
+ldap-search-bind-password:${CLOUDRON_LDAP_BIND_PASSWORD}
+ldap-user-base-dn:${CLOUDRON_LDAP_USERS_BASE_DN}
+ldap-group-base-dn:${CLOUDRON_LDAP_GROUPS_BASE_DN}
 ldap-username-attribute:username
-mysql-hostname:${MYSQL_HOST}
-mysql-port:${MYSQL_PORT}
-mysql-database:${MYSQL_DATABASE}
-mysql-username:${MYSQL_USERNAME}
-mysql-password:${MYSQL_PASSWORD}
+mysql-hostname:${CLOUDRON_MYSQL_HOST}
+mysql-port:${CLOUDRON_MYSQL_PORT}
+mysql-database:${CLOUDRON_MYSQL_DATABASE}
+mysql-username:${CLOUDRON_MYSQL_USERNAME}
+mysql-password:${CLOUDRON_MYSQL_PASSWORD}
 EOF
 
 mkdir -p /run/tomcat/temp /run/tomcat/logs /run/tomcat/work /run/tomcat/webapps
 cp -a /app/code/guacamole-web /run/tomcat/webapps/ROOT
 
 
-MYSQL="mysql -u ${MYSQL_USERNAME} -p${MYSQL_PASSWORD} -h ${MYSQL_HOST} --port ${MYSQL_PORT} --database ${MYSQL_DATABASE}"
+MYSQL="mysql -u ${CLOUDRON_MYSQL_USERNAME} -p${CLOUDRON_MYSQL_PASSWORD} -h ${CLOUDRON_MYSQL_HOST} --port ${CLOUDRON_MYSQL_PORT} --database ${CLOUDRON_MYSQL_DATABASE}"
 
 $MYSQL < /app/code/schema/001-create-schema.sql \
 && $MYSQL < /app/code/schema/002-create-admin-user.sql \

@@ -32,11 +32,6 @@ RUN apt-get update                         && \
     apt-get install -y $BUILD_DEPENDENCIES && \
     rm -rf /var/lib/apt/lists/*
 
-# RUN apt-get update \
-#     && apt-get -y install libcairo2-dev libjpeg-turbo8-dev libpng12-dev libossp-uuid-dev \
-#        libavcodec-dev libavutil-dev libswscale-dev libfreerdp-dev libpango1.0-dev libssh2-1-dev \
-#        libtelnet-dev libvncserver-dev libpulse-dev libssl-dev libvorbis-dev libwebp-dev \ 
-#        tomcat8 freerdp ghostscript
 
 ENV VERSION 1.1.0
 ENV MYSQL_CONNECTOR_VERSION 5.1.40
@@ -51,9 +46,10 @@ RUN wget "$DOWNLOAD_URL/source/guacamole-server-${VERSION}.tar.gz" -O - | tar -x
     && ./configure --prefix=/app/code \
     && make \
     && make install \
+    && ldconfig \
     && cd .. \
     && rm -rf guacamole-server-${VERSION}
-
+    
 # Download extensions
 RUN mkdir -p /app/code/extensions \
     && wget "$DOWNLOAD_URL/binary/guacamole-auth-ldap-${VERSION}.tar.gz" -O - | tar -xz \
