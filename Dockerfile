@@ -5,12 +5,14 @@ EXPOSE 8000
 
 ARG PREFIX_DIR=/app/code/guacamole
 
+
 # Build arguments
 ARG BUILD_DIR=/tmp/guacd-docker-BUILD
 ARG BUILD_DEPENDENCIES="              \
         autoconf                      \
         automake                      \
         freerdp2-dev                  \
+        libvorbis-dev                 \
         gcc                           \
         libcairo2-dev                 \
         libjpeg-turbo8-dev            \
@@ -25,13 +27,35 @@ ARG BUILD_DEPENDENCIES="              \
         libwebsockets-dev             \
         libwebp-dev                   \
         tomcat8                       \
+        libavcodec-dev                \
+        libavutil-dev                 \
+        libswscale-dev                \
+        libpng-dev                    \
         make"
 
 # Bring build environment up to date and install build dependencies
-RUN apt-get update                         && \
-    apt-get install -y $BUILD_DEPENDENCIES && \
+
+ARG BUILD_NEW_DEPS="build-essential libcairo2-dev libossp-uuid-dev libavcodec-dev libavutil-dev \
+libswscale-dev freerdp2-dev libpango1.0-dev libssh2-1-dev libtelnet-dev libvncserver-dev libpulse-dev libssl-dev \
+libvorbis-dev libwebp-dev libwebsockets-dev wget libtool-bin tomcat8"
+
+RUN add-apt-repository -yn universe && \
+    apt-get -qq update                         && \
+    apt-get install -y $BUILD_NEW_DEPS && \
     rm -rf /var/lib/apt/lists/*
 
+ARG RUNTIME_DEPENDENCIES="            \
+        ca-certificates               \
+        ghostscript                   \
+        fonts-liberation              \
+        fonts-dejavu                  \
+        xfonts-terminus"
+
+
+# Bring runtime environment up to date and install runtime dependencies
+RUN apt-get update                                          && \
+    apt-get install -y $RUNTIME_DEPENDENCIES                && \
+    rm -rf /var/lib/apt/lists/*
 
 ENV VERSION 1.1.0
 ENV MYSQL_CONNECTOR_VERSION 5.1.40
@@ -43,7 +67,8 @@ WORKDIR /app/code
 # Compile the server
 RUN wget "$DOWNLOAD_URL/source/guacamole-server-${VERSION}.tar.gz" -O - | tar -xz \
     && cd guacamole-server-${VERSION} \
-    && ./configure --prefix=/app/code \
+    #&& ./configure --prefix=/app/code \
+    && ./configure --with-init-dir=/etc/init.d \
     && make \
     && make install \
     && ldconfig \
