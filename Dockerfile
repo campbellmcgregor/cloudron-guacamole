@@ -67,8 +67,8 @@ WORKDIR /app/code
 # Compile the server
 RUN wget "$DOWNLOAD_URL/source/guacamole-server-${VERSION}.tar.gz" -O - | tar -xz \
     && cd guacamole-server-${VERSION} \
-    #&& ./configure --prefix=/app/code \
-    && ./configure --with-init-dir=/etc/init.d \
+    && ./configure --prefix=/app/code \
+    #&& ./configure --with-init-dir=/etc/init.d \
     && make \
     && make install \
     && ldconfig \
