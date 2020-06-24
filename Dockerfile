@@ -1,54 +1,43 @@
 FROM cloudron/base:2.0.0@sha256:f9fea80513aa7c92fe2e7bf3978b54c8ac5222f47a9a32a7f8833edf0eb5a4f4
 
 
-EXPOSE 8000
+EXPOSE 8080
 
-ARG PREFIX_DIR=/app/code/guacamole
-
-
-# Build arguments
-ARG BUILD_DIR=/tmp/guacd-docker-BUILD
-# Bring build environment up to date and install build dependencies
-
-ARG BUILD_NEW_DEPS="build-essential libcairo2-dev libossp-uuid-dev libavcodec-dev libavutil-dev \
-libswscale-dev freerdp2-dev libpango1.0-dev libssh2-1-dev libtelnet-dev libvncserver-dev libpulse-dev libssl-dev \
-libvorbis-dev libwebp-dev libwebsockets-dev wget libtool-bin tomcat8"
-
-RUN add-apt-repository -yn universe && \
-    apt-get -qq update                         && \
-    apt-get install -y $BUILD_NEW_DEPS && \
-    rm -rf /var/lib/apt/lists/*
-
-ARG RUNTIME_DEPENDENCIES="            \
-        ca-certificates               \
-        ghostscript                   \
-        fonts-liberation              \
-        fonts-dejavu                  \
-        xfonts-terminus"
-
-
-# Bring runtime environment up to date and install runtime dependencies
-RUN apt-get update                                          && \
-    apt-get install -y $RUNTIME_DEPENDENCIES                && \
-    rm -rf /var/lib/apt/lists/*
-
+# define some envs and args
+ARG VERSION=1.1.0
+ARG DOWNLOAD_URL="http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/${VERSION}"
 ENV VERSION 1.1.0
 ENV MYSQL_CONNECTOR_VERSION 5.1.40
-ENV DOWNLOAD_URL "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/${VERSION}"
 
+
+#some general stuff
 RUN mkdir -p /app/code
 WORKDIR /app/code
+# Log Location
+ARG LOG="/tmp/guacamole_${GUACVERSION}_build.log"
+
+
+# install freerdp fix for ubuntu 18.04
+RUN add-apt-repository ppa:remmina-ppa-team/freerdp-daily && \
+    apt-get update && \
+    apt-get install -y freerdp2-dev freerdp2-x11 
+
+# now install the prereqs for guacamole
+RUN apt-get update && \
+    apt-get install -y mysql-client build-essential libcairo2-dev libjpeg-turbo8-dev libpng-dev libossp-uuid-dev libavcodec-dev libavutil-dev \
+    libswscale-dev libpango1.0-dev libssh2-1-dev libtelnet-dev libvncserver-dev libpulse-dev libssl-dev \
+    libvorbis-dev libwebp-dev libwebsockets-dev \
+    freerdp2-x11 libtool-bin ghostscript dpkg-dev \
+    wget crudini tomcat8 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Compile the server
 RUN wget "$DOWNLOAD_URL/source/guacamole-server-${VERSION}.tar.gz" -O - | tar -xz \
     && cd guacamole-server-${VERSION} \
-    && autoreconf -fi \
-    #&& ./configure --prefix=/app/code \
-    #&& ./configure --with-init-dir=/etc/init.d \
-    && ./configure --prefix=/app/code --with-freerdp-plugin-dir=/app/code/lib/freerdp2 --with-ssh --with-init-dir=/etc/init.d \
+    && ./configure --prefix=/app/code --with-freerdp-plugin-dir=/app/code/lib/freerdp2 \
     && make \
     && make install \
-    && ldconfig 
+    && ldconfig &>> ${LOG}
     #&& cd .. \
    # && rm -rf guacamole-server-${VERSION}
 
@@ -60,7 +49,8 @@ RUN mkdir -p /app/code/extensions \
     && mv guacamole-auth-ldap-${VERSION}/guacamole-auth-ldap-${VERSION}.jar /app/code/extensions \
     && mv guacamole-auth-jdbc-${VERSION}/mysql/guacamole-auth-jdbc-mysql-${VERSION}.jar /app/code/extensions \
     && mv guacamole-auth-jdbc-${VERSION}/mysql/schema /app/code/schema \
-    && rm -rf guacamole-auth-ldap-${VERSION} guacamole-auth-jdbc-${VERSION}
+    && rm -rf guacamole-auth-ldap-${VERSION} guacamole-auth-jdbc-${VERSION} \
+    &>> ${LOG}
 
 # Download MySQL connector
 RUN mkdir -p /app/code/lib \
