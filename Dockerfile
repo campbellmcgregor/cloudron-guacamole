@@ -8,31 +8,6 @@ ARG PREFIX_DIR=/app/code/guacamole
 
 # Build arguments
 ARG BUILD_DIR=/tmp/guacd-docker-BUILD
-ARG BUILD_DEPENDENCIES="              \
-        autoconf                      \
-        automake                      \
-        freerdp2-dev                  \
-        libvorbis-dev                 \
-        gcc                           \
-        libcairo2-dev                 \
-        libjpeg-turbo8-dev            \
-        libossp-uuid-dev              \
-        libpango1.0-dev               \
-        libpulse-dev                  \
-        libssh2-1-dev                 \
-        libssl-dev                    \
-        libtelnet-dev                 \
-        libtool                       \
-        libvncserver-dev              \
-        libwebsockets-dev             \
-        libwebp-dev                   \
-        tomcat8                       \
-        libavcodec-dev                \
-        libavutil-dev                 \
-        libswscale-dev                \
-        libpng-dev                    \
-        make"
-
 # Bring build environment up to date and install build dependencies
 
 ARG BUILD_NEW_DEPS="build-essential libcairo2-dev libossp-uuid-dev libavcodec-dev libavutil-dev \
@@ -67,13 +42,16 @@ WORKDIR /app/code
 # Compile the server
 RUN wget "$DOWNLOAD_URL/source/guacamole-server-${VERSION}.tar.gz" -O - | tar -xz \
     && cd guacamole-server-${VERSION} \
-    && ./configure --prefix=/app/code \
+    && autoreconf -fi \
+    #&& ./configure --prefix=/app/code \
     #&& ./configure --with-init-dir=/etc/init.d \
+    && ./configure --prefix=/app/code --with-freerdp-plugin-dir=/app/code/lib/freerdp2 --with-ssh --with-init-dir=/etc/init.d \
     && make \
     && make install \
-    && ldconfig \
-    && cd .. \
-    && rm -rf guacamole-server-${VERSION}
+    && ldconfig 
+    #&& cd .. \
+   # && rm -rf guacamole-server-${VERSION}
+
     
 # Download extensions
 RUN mkdir -p /app/code/extensions \
